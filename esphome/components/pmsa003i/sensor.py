@@ -33,6 +33,17 @@ UNIT_COUNTS_PER_100ML = "#/0.1L"
 CONF_PMC_0_3 = "pmc_0_3"
 CONF_PMC_5_0 = "pmc_5_0"
 
+AQICalculatorType = pmsa003i_ns.enum("AQICalculatorType")
+
+CONF_AQI = "aqi"
+CONF_CALCULATION_TYPE = "calculation_type"
+UNIT_INDEX = ""
+
+AQI_CALCULATION_TYPE = {
+    "CAQI": AQICalculatorType.CAQI_TYPE,
+    "AQI": AQICalculatorType.AQI_TYPE,
+}
+
 CONFIG_SCHEMA = (
     cv.Schema(
         {
@@ -95,6 +106,18 @@ CONFIG_SCHEMA = (
                 accuracy_decimals=0,
                 state_class=STATE_CLASS_MEASUREMENT,
             ),
+            cv.Optional(CONF_AQI): sensor.sensor_schema(
+                unit_of_measurement=UNIT_INDEX,
+                icon=ICON_CHEMICAL_WEAPON,
+                accuracy_decimals=0,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ).extend(
+                {
+                    cv.Required(CONF_CALCULATION_TYPE): cv.enum(
+                        AQI_CALCULATION_TYPE, upper=True
+                    ),
+                }
+            ),
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -114,6 +137,14 @@ TYPES = {
 }
 
 
+def _validate(config):
+    if CONF_AQI in config and CONF_PM_2_5 not in config:
+        raise cv.Invalid("AQI sensor requires PM 2.5")
+    if CONF_AQI in config and CONF_PM_10_0 not in config:
+        raise cv.Invalid("AQI sensor requires PM 10 sensors")
+    return config
+
+
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
@@ -126,3 +157,8 @@ async def to_code(config):
         if key in config:
             sens = await sensor.new_sensor(config[key])
             cg.add(getattr(var, funcName)(sens))
+
+    if CONF_AQI in config:
+        sens = yield sensor.new_sensor(config[CONF_AQI])
+        cg.add(var.set_aqi_sensor(sens))
+        cg.add(var.set_aqi_calculation_type(config[CONF_AQI][CONF_CALCULATION_TYPE]))

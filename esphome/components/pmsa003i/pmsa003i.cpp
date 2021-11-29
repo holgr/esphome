@@ -19,7 +19,14 @@ void PMSA003IComponent::setup() {
   }
 }
 
-void PMSA003IComponent::dump_config() { LOG_I2C_DEVICE(this); }
+void PMSA003IComponent::dump_config() {
+  LOG_I2C_DEVICE(this);
+
+  LOG_SENSOR("  ", "PM1.0", this->pm_1_0_sensor_);
+  LOG_SENSOR("  ", "PM2.5", this->pm_2_5_sensor_);
+  LOG_SENSOR("  ", "PM10.0", this->pm_10_0_sensor_);
+  LOG_SENSOR("  ", "AQI", this->aqi_sensor_);
+}
 
 void PMSA003IComponent::update() {
   PM25AQIData data;
@@ -30,21 +37,54 @@ void PMSA003IComponent::update() {
   if (successful_read) {
     this->status_clear_warning();
     ESP_LOGV(TAG, "Read success. Updating sensors.");
+    // int16_t pm_1_0_value = -1;
+    int16_t pm_2_5_value = -1;
+    int16_t pm_10_0_value = -1;
 
     if (this->standard_units_) {
-      if (this->pm_1_0_sensor_ != nullptr)
+      if (this->pm_1_0_sensor_ != nullptr) {
         this->pm_1_0_sensor_->publish_state(data.pm10_standard);
-      if (this->pm_2_5_sensor_ != nullptr)
+      }
+      if (this->pm_2_5_sensor_ != nullptr) {
         this->pm_2_5_sensor_->publish_state(data.pm25_standard);
-      if (this->pm_10_0_sensor_ != nullptr)
+        pm_2_5_value = this->pm_2_5_sensor_->get_state();
+      }
+      if (this->pm_10_0_sensor_ != nullptr) {
         this->pm_10_0_sensor_->publish_state(data.pm100_standard);
+        pm_10_0_value = this->pm_10_0_sensor_->get_state();
+      }
     } else {
-      if (this->pm_1_0_sensor_ != nullptr)
+      if (this->pm_1_0_sensor_ != nullptr) {
         this->pm_1_0_sensor_->publish_state(data.pm10_env);
-      if (this->pm_2_5_sensor_ != nullptr)
+      }
+      if (this->pm_2_5_sensor_ != nullptr) {
         this->pm_2_5_sensor_->publish_state(data.pm25_env);
-      if (this->pm_10_0_sensor_ != nullptr)
+        pm_2_5_value = this->pm_2_5_sensor_->get_state();
+      }
+      if (this->pm_10_0_sensor_ != nullptr) {
         this->pm_10_0_sensor_->publish_state(data.pm100_env);
+        pm_10_0_value = this->pm_10_0_sensor_->get_state();
+      }
+    }
+
+    /*
+    if (this->pm_1_0_sensor_ != nullptr) {
+      pm_1_0_value = get_sensor_value_(data_buffer_, PM_1_0_VALUE_INDEX);
+    }
+
+    if (this->pm_2_5_sensor_ != nullptr) {
+      pm_2_5_value = get_sensor_value_(data_buffer_, PM_2_5_VALUE_INDEX);
+    }
+
+    if (this->pm_10_0_sensor_ != nullptr) {
+      pm_10_0_value = get_sensor_value_(data_buffer_, PM_10_0_VALUE_INDEX);
+    }
+    */
+
+    int8_t aqi_value = -1;
+    if (this->aqi_sensor_ != nullptr && pm_2_5_value != -1 && pm_10_0_value != -1) {
+      AbstractAQICalculator *calculator = this->aqi_calculator_factory_.get_calculator(this->aqi_calc_type_);
+      aqi_value = calculator->get_aqi(pm_2_5_value, pm_10_0_value);
     }
 
     if (this->pmc_0_3_sensor_ != nullptr)
@@ -59,6 +99,10 @@ void PMSA003IComponent::update() {
       this->pmc_5_0_sensor_->publish_state(data.particles_50um);
     if (this->pmc_10_0_sensor_ != nullptr)
       this->pmc_10_0_sensor_->publish_state(data.particles_100um);
+
+    if (aqi_value != -1)
+      this->aqi_sensor_->publish_state(aqi_value);
+
   } else {
     this->status_set_warning();
     ESP_LOGV(TAG, "Read failure. Skipping update.");
