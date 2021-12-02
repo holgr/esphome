@@ -13,6 +13,7 @@ from esphome.const import (
     UNIT_MICROGRAMS_PER_CUBIC_METER,
     ICON_CHEMICAL_WEAPON,
     ICON_COUNTER,
+    DEVICE_CLASS_AQI,
     DEVICE_CLASS_PM1,
     DEVICE_CLASS_PM10,
     DEVICE_CLASS_PM25,
@@ -159,6 +160,6 @@ async def to_code(config):
             cg.add(getattr(var, funcName)(sens))
 
     if CONF_AQI in config:
-        sens = yield sensor.new_sensor(config[CONF_AQI])
+        sens = await sensor.new_sensor(config[CONF_AQI])
         cg.add(var.set_aqi_sensor(sens))
         cg.add(var.set_aqi_calculation_type(config[CONF_AQI][CONF_CALCULATION_TYPE]))
