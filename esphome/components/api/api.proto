@@ -869,6 +869,11 @@ message ClimateCommandRequest {
 }
 
 // ==================== NUMBER ====================
+enum NumberMode {
+  NUMBER_MODE_AUTO = 0;
+  NUMBER_MODE_BOX = 1;
+  NUMBER_MODE_SLIDER = 2;
+}
 message ListEntitiesNumberResponse {
   option (id) = 49;
   option (source) = SOURCE_SERVER;
@@ -885,6 +890,8 @@ message ListEntitiesNumberResponse {
   float step = 8;
   bool disabled_by_default = 9;
   EntityCategory entity_category = 10;
+  string unit_of_measurement = 11;
+  NumberMode mode = 12;
 }
 message NumberStateResponse {
   option (id) = 50;
@@ -960,6 +967,7 @@ message ListEntitiesButtonResponse {
   string icon = 5;
   bool disabled_by_default = 6;
   EntityCategory entity_category = 7;
+  string device_class = 8;
 }
 message ButtonCommandRequest {
   option (id) = 62;
