@@ -17,12 +17,9 @@ class AQICalculator : public AbstractAQICalculator {
  protected:
   static const int AMOUNT_OF_LEVELS = 6;
 
-  int index_grid_[AMOUNT_OF_LEVELS][2] = {{0, 51}, {51, 100}, {101, 150}, {151, 200}, {201, 300}, {301, 500}};
-
-  int pm2_5_calculation_grid_[AMOUNT_OF_LEVELS][2] = {{0, 12}, {13, 35}, {36, 55}, {56, 150}, {151, 250}, {251, 500}};
-
-  int pm10_0_calculation_grid_[AMOUNT_OF_LEVELS][2] = {{0, 54},    {55, 154},  {155, 254},
-                                                       {255, 354}, {355, 424}, {425, 604}};
+  int index_grid_[AMOUNT_OF_LEVELS][2]              = {{0, 51}, {51, 100}, {101, 150}, {151, 200}, {201, 300}, {301, 500}};
+  int pm2_5_calculation_grid_[AMOUNT_OF_LEVELS][2]  = {{0, 12}, {13, 35},  {36, 55},   {56, 150},  {151, 250}, {251, 500}};
+  int pm10_0_calculation_grid_[AMOUNT_OF_LEVELS][2] = {{0, 54}, {55, 154}, {155, 254}, {255, 354}, {355, 424}, {425, 604}};
 
   int calculate_index_(uint16_t value, int array[AMOUNT_OF_LEVELS][2]) {
     int grid_index = get_grid_index_(value, array);
@@ -30,8 +27,14 @@ class AQICalculator : public AbstractAQICalculator {
     int aqi_hi = index_grid_[grid_index][1];
     int conc_lo = array[grid_index][0];
     int conc_hi = array[grid_index][1];
+    
+//    LOG_SENSOR("  ", "aqi_lo", this->aqi_lo);
+//    LOG_SENSOR("  ", "aqi_hi", aqi_hi);
+//    LOG_SENSOR("  ", "conc_lo", conc_lo);
+//    LOG_SENSOR("  ", "conc_hi", conc_hi);
 
-    return (value - conc_lo) * (aqi_hi - aqi_lo) / (conc_hi - conc_lo) + aqi_lo;
+    return ((aqi_hi - aqi_lo) / (conc_hi - conc_lo)) * (value - conc_lo) + aqi_lo;
+//    return aqi_lo;
   }
 
   int get_grid_index_(uint16_t value, int array[AMOUNT_OF_LEVELS][2]) {

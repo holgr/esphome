@@ -35,7 +35,9 @@ class CAQICalculator : public AbstractAQICalculator {
     int conc_lo = array[grid_index][0];
     int conc_hi = array[grid_index][1];
 
-    return (value - conc_lo) * (aqi_hi - aqi_lo) / (conc_hi - conc_lo) + aqi_lo;
+    int aqi = ((aqi_hi - aqi_lo) / (conc_hi - conc_lo)) * (value - conc_lo) + aqi_lo;
+
+    return aqi;
   }
 
   int get_grid_index_(uint16_t value, int array[AMOUNT_OF_LEVELS][2]) {
