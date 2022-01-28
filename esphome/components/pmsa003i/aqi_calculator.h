@@ -33,8 +33,7 @@ class AQICalculator : public AbstractAQICalculator {
 //    LOG_SENSOR("  ", "conc_lo", conc_lo);
 //    LOG_SENSOR("  ", "conc_hi", conc_hi);
 
-    return ((aqi_hi - aqi_lo) / (conc_hi - conc_lo)) * (value - conc_lo) + aqi_lo;
-//    return aqi_lo;
+    return (value - conc_lo) * (aqi_hi - aqi_lo) / (conc_hi - conc_lo) + aqi_lo;
   }
 
   int get_grid_index_(uint16_t value, int array[AMOUNT_OF_LEVELS][2]) {
